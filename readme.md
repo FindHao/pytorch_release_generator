@@ -193,7 +193,7 @@ python generate_release_notes.py -i pr_list.txt -m release.md -u release_url.md 
 
 - **`ollama_responses.log`**:
 
-  ```markdown
+```markdown
 ### 2025-01-22 21:17:36
 <think>
 Okay, I need to categorize these Pull Requests (PRs) into the specified categories for PyTorch's release notes. Let me go through each PR one by one.
@@ -219,7 +219,7 @@ Here is the categorized list of PRs based on their impact and changes:
 
 ## Developers:
 - Adds cache logs and performs minor caching cleanup to aid developers (#136456).
-  ```
+```
 
 ### Processing Summary
 
