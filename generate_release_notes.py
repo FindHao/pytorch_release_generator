@@ -17,6 +17,7 @@ REPO_NAME = "pytorch"
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "deepseek-r1:14b"  # Updated to your new model name
 BATCH_SIZE = 5  # Number of PRs to process per batch
+LOG_FILE = "ollama_responses.log"  # Path to the log file
 
 # GitHub API request headers
 HEADERS = {
