@@ -7,17 +7,17 @@ import time
 from typing import List, Dict, Set
 from datetime import datetime
 
-# Configure GitHub and Ollama related information
-# Recommended to manage sensitive information using environment variables
+# Configuration for GitHub and Ollama
+# It's recommended to manage sensitive information using environment variables
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", None)
 if GITHUB_TOKEN is None:
     raise ValueError("GITHUB_TOKEN is not set")
 REPO_OWNER = "pytorch"
 REPO_NAME = "pytorch"
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "deepseek-r1:14b"  # Replace with your model name
+MODEL_NAME = "deepseek-r1:14b"  # Updated to your new model name
 BATCH_SIZE = 5  # Number of PRs to process per batch
-LOG_FILE = "ollama_responses.log"  # Log file path
+LOG_FILE = "ollama_responses.log"  # Path to the log file
 UNPROCESSED_PR_FILE = "unprocessed_prs.txt"  # Output file for unprocessed PRs
 
 # GitHub API request headers
@@ -29,16 +29,16 @@ HEADERS = {
 
 def read_pr_list(file_path: str) -> List[Dict[str, str]]:
     """
-    Read PR list file, extract PR number, original title and optional tags.
-    File format example:
+    Reads the PR list file, extracting PR number, original title, and optional tags.
+    Example file format:
     [Flex Attention][AOTI] Paged Attention (#137164)
-     Make requires_stride_order more unbacked-symint-aware (#137201)
+    [inductor][AOTI] Make requires_stride_order more unbacked-symint-aware (#137201)
     Paged Attention without tags (#137165)
     """
     pr_entries = []
-    # This regular expression will match titles with one or more tags
+    # Regex to match titles with one or more tags
     pr_pattern_with_tags = re.compile(r"^(?:\[(.*?)\])+.*\(#(\d+)\)")
-    # This regular expression will match titles without tags
+    # Regex to match titles without tags
     pr_pattern_without_tags = re.compile(r"^(?!\[(.*?)\]).*\(#(\d+)\)")
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -71,7 +71,7 @@ def read_pr_list(file_path: str) -> List[Dict[str, str]]:
 
 def fetch_pr_details(pr_number: str) -> Dict:
     """
-    Get PR details, including title and description.
+    Fetches detailed information for a PR, including title and description.
     """
     pr_api_url = f"https://api.github.com/repos/{
         REPO_OWNER}/{REPO_NAME}/pulls/{pr_number}"
@@ -99,7 +99,7 @@ def fetch_pr_details(pr_number: str) -> Dict:
 
 def fetch_pr_comments(pr_number: str) -> List[Dict]:
     """
-    Get PR comments, excluding robot comments.
+    Fetches comments for a PR, excluding bot comments.
     """
     comments_api_url = f"https://api.github.com/repos/{
         REPO_OWNER}/{REPO_NAME}/issues/{pr_number}/comments"
@@ -130,7 +130,7 @@ def fetch_pr_comments(pr_number: str) -> List[Dict]:
 
 def handle_rate_limit(response: requests.Response):
     """
-    Check and handle GitHub API rate limit.
+    Checks and handles GitHub API rate limiting.
     """
     if 'X-RateLimit-Remaining' in response.headers:
         remaining = int(response.headers['X-RateLimit-Remaining'])
@@ -138,7 +138,7 @@ def handle_rate_limit(response: requests.Response):
             reset_time = int(response.headers.get(
                 'X-RateLimit-Reset', time.time() + 60))
             sleep_time = max(reset_time - int(time.time()),
-                             0) + 5  # Add 5 seconds buffer
+                             0) + 5  # Add a 5-second buffer
             reset_time_str = time.strftime(
                 '%Y-%m-%d %H:%M:%S', time.localtime(reset_time))
             print(f"Approaching rate limit. Sleeping for {
@@ -148,21 +148,21 @@ def handle_rate_limit(response: requests.Response):
 
 def prepare_batches(pr_data_list: List[Dict], batch_size: int) -> List[List[Dict]]:
     """
-    Split PR data list into multiple batches.
+    Splits the PR data list into multiple batches.
     """
     return [pr_data_list[i:i + batch_size] for i in range(0, len(pr_data_list), batch_size)]
 
 
 def prepare_prompt(batch: List[Dict]) -> str:
     """
-    Prepare prompt to send to Ollama model, including classification instructions, classification definitions and PR data.
+    Prepares the prompt to send to the Ollama model, including categorization instructions, definitions, and PR data.
     """
     category_definitions = """
 ### Category Definitions:
 
-- **BC breaking**: All commits that are BC-breaking. These are the most important commits. If any pre-sorted commit is actually BC-breaking, do move it to this section. Each commit should contain a paragraph explaining the rationale behind the change as well as an example for how to update user code BC-Guidelines.
+- **BC breaking**: All commits that are BC-breaking. These are the most important commits. If any pre-sorted commit is actually BC-breaking, move it to this section. Each commit should contain a paragraph explaining the rationale behind the change as well as an example for how to update user code BC-Guidelines.
 - **Deprecations**: All commits introducing deprecation. Each commit should include a small example explaining what should be done to update user code.
-- **New_features**: All commits introducing a new feature (new functions, new submodule, new supported platform etc).
+- **New_features**: All commits introducing a new feature (new functions, new submodule, new supported platform, etc.).
 - **Improvements**: All commits providing improvements to existing features should be here (new backend for a function, new argument, better numerical stability).
 - **Bug Fixes**: All commits that fix bugs and behaviors that do not match the documentation.
 - **Performance**: All commits that are added mainly for performance (we separate this from improvements above to make it easier for users to look for it).
@@ -174,29 +174,29 @@ def prepare_prompt(batch: List[Dict]) -> str:
 ### Example Output:
 
 ## Improvements:
-- [Improvements] Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance (#135505).
-- [Improvements] Flip custom_op_default_layout_constraint in Inductor to optimize tensor layout for improved computation efficiency (#135239).
+- [inductor][AOTI] Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance (#135505).
+- [inductor][AOTI] Flip custom_op_default_layout_constraint in Inductor to optimize tensor layout for improved computation efficiency (#135239).
 
 ## Bug Fixes:
-- [Bug Fixes] Fixes an edge case in remove_split_with_size_one to enhance stability (#135962).
+- [inductor][AOTI] Fixes an edge case in remove_split_with_size_one to enhance stability (#135962).
 
 ## New_features:
-- [New_features] Introduces a new backend for faster computation in Triton kernels (#135530).
+- [inductor][AOTI] Introduces a new backend for faster computation in Triton kernels (#135530).
 
 ## Deprecations:
-- [Deprecations] Deprecates the old stride order configuration in favor of the new method (#136367).
+- [inductor][AOTI] Deprecates the old stride order configuration in favor of the new method (#136367).
 
 ## BC breaking:
-- [BC breaking] Changes the layout constraint which requires users to update their code as follows: ...
+- [inductor][AOTI] Changes the layout constraint which requires users to update their code as follows: ...
 
 ## Performance:
-- [Performance] Optimizes the kernel to reduce computation time by 20% (#135239).
+- [inductor][AOTI] Optimizes the kernel to reduce computation time by 20% (#135239).
 
 ## Documentation:
-- [Documentation] Updates the documentation to include new layout constraints (#135581).
+- [inductor][AOTI] Updates the documentation to include new layout constraints (#135581).
 
 ## Developers:
-- [Developers] Refactors the cache management system to improve extensibility (#138239).
+- [inductor][AOTI] Refactors the cache management system to improve extensibility (#138239).
 """
 
     instructions = (
@@ -204,8 +204,8 @@ def prepare_prompt(batch: List[Dict]) -> str:
         "Your task is to categorize a list of Pull Requests (PRs) into the following categories based on the definitions provided below:\n\n"
         "{category_definitions}\n\n"
         "Each PR should be summarized in one sentence and placed under the appropriate category. "
-        "Use the format '- [Category] one sentence summary of the PR (#PR_Number)'. "
-        "Ensure that the output is in valid Markdown format.\n\n"
+        "Use the format '- [Tags] one sentence summary of the PR (#PR_Number)'. "
+        "Ensure that the output is in valid Markdown format and that the PR number is placed at the end of each entry.\n\n"
         "### Example Output:\n{example_response}\n\n"
         "Here is the list of PRs:\n"
     ).format(category_definitions=category_definitions, example_response=example_response)
@@ -221,15 +221,15 @@ def prepare_prompt(batch: List[Dict]) -> str:
 
 def send_to_ollama(prompt: str) -> str:
     """
-    Send prompt to local Ollama model and get complete response.
-    Handle stream response, gradually collect all response parts until done is True.
+    Sends the prompt to the local Ollama model and retrieves the complete response.
+    Handles streaming responses by collecting all response parts until done is True.
     """
     data = {
         "model": MODEL_NAME,
         "prompt": prompt,
         "options": {
             "max_length": 2000,  # Adjust as needed
-            "stream": True  # Enable stream response
+            "stream": True  # Enable streaming responses
         }
     }
     try:
@@ -256,10 +256,18 @@ def send_to_ollama(prompt: str) -> str:
         return ""
 
 
+def extract_tags_from_summary(summary: str) -> Set[str]:
+    """
+    Extracts tags from the PR summary.
+    """
+    tag_pattern = re.compile(r"\[(.*?)\]")
+    return set(tag.lower() for tag in tag_pattern.findall(summary))
+
+
 def parse_ollama_response(response_text: str) -> Dict[str, List[Dict[str, str]]]:
     """
-    Parse Ollama model response, categorize PRs.
-    Each category contains PR summary and number.
+    Parses the response from the Ollama model, categorizing PRs accordingly.
+    Returns a dictionary where each key is a category and the value is a list of PR summaries and numbers.
     """
     categories = {
         "bc_breaking": [],
@@ -283,51 +291,42 @@ def parse_ollama_response(response_text: str) -> Dict[str, List[Dict[str, str]]]
         "Developers": "developers"
     }
 
-    # Regular expression matching: - [Category][Tags] Summary (#PRNumber)
-    pr_pattern = re.compile(r"- \[(.*?)\](?:\[(.*?)\])* (.*?) \(#(\d+)\)")
+    # Use Markdown structure to parse categories and corresponding PRs
+    current_category = None
+    # Updated regex to make [Tags] optional
+    pr_pattern = re.compile(r"-(?:\[(.*?)\])? (.*?) \(#(\d+)\)")
 
     for line in response_text.splitlines():
         line = line.strip()
-        match = pr_pattern.match(line)
-        if match:
-            category_tag = match.group(1)
-            tags = match.group(2) if match.group(2) else ""
-            summary = match.group(3)
-            pr_number = match.group(4)
-            category_key = category_mapping.get(category_tag, None)
-            if category_key:
-                # Combine tags
-                combined_tags = ""
-                if tags:
-                    combined_tags = f"[{tags}]"
-                if category_tag:
-                    combined_tags = f"[{category_tag}]{combined_tags}"
-                # Store summary and PR number
+        if line.startswith("## "):
+            # Get the category name
+            category_title = line[3:].rstrip(":").strip()
+            current_category = category_mapping.get(category_title, None)
+            if not current_category:
+                print(f"Unknown category '{category_title}'. Skipping...")
+        elif line.startswith("- "):
+            match = pr_pattern.match(line)
+            if match and current_category:
+                tags = match.group(1) if match.group(1) else ""
+                summary = match.group(2)
+                pr_number = match.group(3)
                 pr_entry = {
-                    "summary": f"{combined_tags} {summary}",
+                    "summary": f"[{tags}] {summary}" if tags else f"{summary}",
                     "pr_number": pr_number
                 }
-                categories[category_key].append(pr_entry)
+                categories[current_category].append(pr_entry)
             else:
-                print(f"Unknown category tag '{
-                      category_tag}' in PR '{line}'. Skipping...")
+                print(f"PR '{
+                      line}' does not match the expected format or no current category. Skipping...")
         else:
-            if line.startswith("## "):
-                # Optional: Handle unexpected category title
-                continue
-            elif line.startswith("- "):
-                print(
-                    f"PR '{line}' does not match the expected format. Skipping...")
-            else:
-                # Ignore other lines
-                continue
+            continue
 
     return categories
 
 
 def aggregate_markdown(existing: Dict[str, List[Dict[str, str]]], new: Dict[str, List[Dict[str, str]]]) -> Dict[str, List[Dict[str, str]]]:
     """
-    Add new categorized PRs to existing categories.
+    Adds newly categorized PRs to the existing categories.
     """
     for key in existing.keys():
         existing[key].extend(new.get(key, []))
@@ -336,8 +335,8 @@ def aggregate_markdown(existing: Dict[str, List[Dict[str, str]]], new: Dict[str,
 
 def generate_markdown(categories: Dict[str, List[Dict[str, str]]], include_urls: bool = False) -> str:
     """
-    Generate Markdown content based on categorization results.
-    If include_urls is True, replace PR numbers with URLs.
+    Generates Markdown content based on the categorized PRs.
+    If include_urls is True, replaces PR numbers with URLs.
     """
     markdown = ""
 
@@ -373,7 +372,7 @@ def generate_markdown(categories: Dict[str, List[Dict[str, str]]], include_urls:
 
 def save_output(markdown: str, file_path: str):
     """
-    Save Markdown content to file.
+    Saves the Markdown content to a file.
     """
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(markdown)
@@ -382,7 +381,7 @@ def save_output(markdown: str, file_path: str):
 
 def log_ollama_response(response_text: str):
     """
-    Log Ollama response to log file, append content and add timestamp.
+    Logs the Ollama response to a log file with a timestamp.
     """
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = f"\n### {timestamp}\n{response_text}\n"
@@ -393,7 +392,7 @@ def log_ollama_response(response_text: str):
 
 def extract_pr_numbers_from_release(release_file: str) -> Set[str]:
     """
-    Extract all PR numbers from release.md file.
+    Extracts all PR numbers from the release.md file.
     """
     pr_numbers = set()
     pr_number_pattern = re.compile(r"\(#(\d+)\)")
@@ -412,7 +411,8 @@ def extract_pr_numbers_from_release(release_file: str) -> Set[str]:
 
 def summarize_processing(input_prs: List[Dict[str, str]], release_pr_numbers: Set[str], output_unprocessed_file: str):
     """
-    Compare input PR list and PR numbers in release.md, output summary and write unprocessed PR info to file.
+    Compares the input PR list with the PR numbers in the release notes,
+    outputs a summary, and writes unprocessed PRs to a separate file.
     """
     input_pr_numbers = set(pr["number"] for pr in input_prs)
     processed_pr_numbers = release_pr_numbers
@@ -428,7 +428,7 @@ def summarize_processing(input_prs: List[Dict[str, str]], release_pr_numbers: Se
     print(f"PRs not processed (not included in release.md): {unprocessed}")
 
     if unprocessed > 0:
-        # Get unprocessed PR details
+        # Get detailed information of unprocessed PRs
         unprocessed_prs = [
             pr for pr in input_prs if pr["number"] in unprocessed_pr_numbers]
         with open(output_unprocessed_file, 'w', encoding='utf-8') as f:
@@ -441,7 +441,7 @@ def summarize_processing(input_prs: List[Dict[str, str]], release_pr_numbers: Se
 
 
 def main(input_file: str, output_file_md: str, output_file_url_md: str, output_unprocessed_file: str):
-    # Read PR list
+    # Read the PR list
     pr_entries = read_pr_list(input_file)
     print(f"Found {len(pr_entries)} PRs in the input list.")
 
@@ -461,14 +461,14 @@ def main(input_file: str, output_file_md: str, output_file_url_md: str, output_u
         "developers": []
     }
 
-    # Process in batches
+    # Batch processing
     batches = prepare_batches(pr_entries, BATCH_SIZE)
     print(f"Processing {len(batches)} batches of up to {BATCH_SIZE} PRs each.")
 
     for i, batch_pr_entries in enumerate(batches, start=1):
         print(f"\nProcessing batch {i}/{len(batches)}...")
 
-        # Get current batch PR details
+        # Fetch details for the current batch
         pr_data_list = []
         for pr_entry in batch_pr_entries:
             pr_number = pr_entry["number"]
@@ -485,7 +485,7 @@ def main(input_file: str, output_file_md: str, output_file_url_md: str, output_u
             print(f"No PR data fetched for batch {i}. Skipping...")
             continue
 
-        # Prepare prompt
+        # Prepare the prompt
         prompt = prepare_prompt(pr_data_list)
 
         # Send to Ollama
@@ -494,25 +494,34 @@ def main(input_file: str, output_file_md: str, output_file_url_md: str, output_u
             print(f"No response from Ollama for batch {i}. Skipping...")
             continue
 
-        # Log Ollama response to log file
+        # Log the Ollama response
         log_ollama_response(ollama_response)
 
-        # Parse response
+        # Parse the response
         categorized = parse_ollama_response(ollama_response)
 
-        # Add tags to categorized results
+        # Add original tags to the categorized results without duplicating
         for category, prs in categorized.items():
             for pr in prs:
                 pr_number = pr["pr_number"]
-                # Find corresponding PR details
+                # Find the corresponding PR details
                 pr_detail = next(
                     (p for p in pr_data_list if p["number"] == pr_number), None)
                 if pr_detail:
-                    tags = pr_detail["tags"]
-                    if tags:
-                        # Format tags as [tag1][tag2]...
-                        formatted_tags = "".join([f"[{tag}]" for tag in tags])
-                        pr["summary"] = f"{formatted_tags} {pr['summary']}"
+                    original_tags = set(tag.lower()
+                                        for tag in pr_detail["tags"])
+                    if original_tags:
+                        # Extract existing tags from the summary
+                        existing_tags = extract_tags_from_summary(
+                            pr["summary"])
+                        # Determine which original tags are missing
+                        missing_tags = original_tags - existing_tags
+                        if missing_tags:
+                            # Format missing tags as [tag1][tag2]...
+                            formatted_missing_tags = "".join(
+                                [f"[{tag}]" for tag in missing_tags])
+                            pr["summary"] = f"{
+                                formatted_missing_tags} {pr['summary']}"
                 else:
                     print(f"Tags not found for PR #{pr_number}")
 
@@ -523,13 +532,13 @@ def main(input_file: str, output_file_md: str, output_file_url_md: str, output_u
         markdown_output = generate_markdown(categories, include_urls=False)
         markdown_url_output = generate_markdown(categories, include_urls=True)
 
-        # Save to file
+        # Save to files
         save_output(markdown_output, output_file_md)
         save_output(markdown_url_output, output_file_url_md)
 
         print(f"Batch {i} processed and results written to files.")
 
-        # Prevent too fast requests, adjust as needed
+        # Prevent too rapid requests; adjust as needed
         time.sleep(1)
 
     print("\nAll batches processed.")
