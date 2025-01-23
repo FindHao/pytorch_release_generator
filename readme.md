@@ -38,8 +38,8 @@
 1. **Clone the Repository**
 
    ```
-   git clone https://github.com/yourusername/your-repo.git
-   cd your-repo
+   git clone https://github.com/FindHao/pytorch_release_notes_generator
+   cd pytorch_release_notes_generator
    ```
 
 2. **Install Dependencies**
@@ -76,6 +76,9 @@ To interact with the GitHub API, you need a Personal Access Token (PAT) with app
 ### 2. Ollama Model Setup
 
 Ensure that the Ollama model you intend to use is running locally and accessible via the specified URL. Adjust the `MODEL_NAME` and `OLLAMA_URL` in the script if necessary.
+```
+ollama run deepseek-r1:14b
+```
 
 ## Usage
 
