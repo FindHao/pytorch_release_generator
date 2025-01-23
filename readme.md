@@ -6,7 +6,7 @@
 
 ## Features
 
-- **Tag Handling**: Recognizes and preserves optional tags in PR titles (e.g., `[inductor][AOTI]`).
+- **Tag Handling**: Recognizes and preserves optional tags in PR titles (e.g., `[inductor]`).
 - **GitHub Integration**: Fetches detailed information and comments for each PR using the GitHub API.
 - **AI-Powered Categorization**: Utilizes the Ollama model to categorize PRs into sections like Improvements, Bug Fixes, etc.
 - **Markdown Generation**: Produces well-structured `release.md` and `release_url.md` files with or without PR URLs.
@@ -73,6 +73,7 @@ To interact with the GitHub API, you need a Personal Access Token (PAT) with app
 
   **Note**: Replace `ghp_your_personal_access_token` with your actual token. Avoid hardcoding the token in scripts, especially in shared or version-controlled environments.
 
+
 ### 2. Ollama Model Setup
 
 Ensure that the Ollama model you intend to use is running locally and accessible via the specified URL. Adjust the `MODEL_NAME` and `OLLAMA_URL` in the script if necessary.
@@ -112,8 +113,8 @@ If optional arguments are not specified, the script will generate `release.md`, 
 Create a text file named `pr_list.txt` with the following content:
 
 ```bash
-[inductor][AOTI] Make requires_stride_order more unbacked-symint-aware (#137201)
-[Flex Attention][AOTI] Paged Attention (#137164)
+[inductor] Make requires_stride_order more unbacked-symint-aware (#137201)
+[Flex Attention] Paged Attention (#137164)
 Paged Attention without tags (#137165)
 ```
 
@@ -129,29 +130,29 @@ python generate_release_notes.py -i pr_list.txt -m release.md -u release_url.md 
 
   ```markdown
   ## Improvements:
-  - [inductor][AOTI] Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance (#137164).
-  - [inductor][AOTI] Makes requires_stride_order more unbacked-symint-aware to enhance functionality (#137201).
+  - Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance (#137164).
+  - [inductor] Makes requires_stride_order more unbacked-symint-aware to enhance functionality (#137201).
   
   ## Bug Fixes:
-  - [inductor][AOTI] Fixes an edge case in remove_split_with_size_one to enhance stability (#135962).
+  - [inductor] Fixes an edge case in remove_split_with_size_one to enhance stability (#135962).
   
   ## New_features:
-  - [inductor][AOTI] Introduces a new backend for faster computation in Triton kernels (#135530).
+  - Introduces a new backend for faster computation in Triton kernels (#135530).
   
   ## Deprecations:
-  - [inductor][AOTI] Deprecates the old stride order configuration in favor of the new method (#136367).
+  - [inductor] Deprecates the old stride order configuration in favor of the new method (#136367).
   
   ## BC breaking:
-  - [inductor][AOTI] Changes the layout constraint which requires users to update their code as follows: ...
+  - [inductor] Changes the layout constraint which requires users to update their code as follows: ...
   
   ## Performance:
-  - [inductor][AOTI] Optimizes the kernel to reduce computation time by 20% (#135239).
+  - Optimizes the kernel to reduce computation time by 20% (#135239).
   
   ## Documentation:
-  - [inductor][AOTI] Updates the documentation to include new layout constraints (#135581).
+  - [inductor] Updates the documentation to include new layout constraints (#135581).
   
   ## Developers:
-  - [inductor][AOTI] Refactors the cache management system to improve extensibility (#138239).
+  - [inductor] Refactors the cache management system to improve extensibility (#138239).
   ```
 
 - **`release_url.md`**:
@@ -159,29 +160,29 @@ python generate_release_notes.py -i pr_list.txt -m release.md -u release_url.md 
   ```markdown
 
   ## Improvements:
-  - [inductor][AOTI] Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance [#137164](https://github.com/pytorch/pytorch/pull/137164).
-  - [inductor][AOTI] Makes requires_stride_order more unbacked-symint-aware to enhance functionality [#137201](https://github.com/pytorch/pytorch/pull/137201).
+  - Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance [#137164](https://github.com/pytorch/pytorch/pull/137164).
+  - [inductor] Makes requires_stride_order more unbacked-symint-aware to enhance functionality [#137201](https://github.com/pytorch/pytorch/pull/137201).
   
   ## Bug Fixes:
-  - [inductor][AOTI] Fixes an edge case in remove_split_with_size_one to enhance stability [#135962](https://github.com/pytorch/pytorch/pull/135962).
+  - [inductor] Fixes an edge case in remove_split_with_size_one to enhance stability [#135962](https://github.com/pytorch/pytorch/pull/135962).
   
   ## New_features:
-  - [inductor][AOTI] Introduces a new backend for faster computation in Triton kernels [#135530](https://github.com/pytorch/pytorch/pull/135530).
+  - Introduces a new backend for faster computation in Triton kernels [#135530](https://github.com/pytorch/pytorch/pull/135530).
   
   ## Deprecations:
-  - [inductor][AOTI] Deprecates the old stride order configuration in favor of the new method [#136367](https://github.com/pytorch/pytorch/pull/136367).
+  - [inductor] Deprecates the old stride order configuration in favor of the new method [#136367](https://github.com/pytorch/pytorch/pull/136367).
   
   ## BC breaking:
-  - [inductor][AOTI] Changes the layout constraint which requires users to update their code as follows: ...
+  - [inductor] Changes the layout constraint which requires users to update their code as follows: ...
   
   ## Performance:
-  - [inductor][AOTI] Optimizes the kernel to reduce computation time by 20% [#135239](https://github.com/pytorch/pytorch/pull/135239).
+  - Optimizes the kernel to reduce computation time by 20% [#135239](https://github.com/pytorch/pytorch/pull/135239).
   
   ## Documentation:
-  - [inductor][AOTI] Updates the documentation to include new layout constraints [#135581](https://github.com/pytorch/pytorch/pull/135581).
+  - [inductor] Updates the documentation to include new layout constraints [#135581](https://github.com/pytorch/pytorch/pull/135581).
   
   ## Developers:
-  - [inductor][AOTI] Refactors the cache management system to improve extensibility [#138239](https://github.com/pytorch/pytorch/pull/138239).
+  - [inductor] Refactors the cache management system to improve extensibility [#138239](https://github.com/pytorch/pytorch/pull/138239).
   ```
 
 - **`unprocessed_prs.txt`**:
@@ -193,31 +194,31 @@ python generate_release_notes.py -i pr_list.txt -m release.md -u release_url.md 
 - **`ollama_responses.log`**:
 
   ```markdown
-  ### 2025-01-22 10:15:30
-  ## Improvements:
-  - [Improvements][inductor][AOTI] Adds broadcast support for key-value batch dimensions in FlexAttention to enhance flexibility and performance (#137164).
-  - [Improvements][inductor][AOTI] Makes requires_stride_order more unbacked-symint-aware to enhance functionality (#137201).
-  
-  ## Bug Fixes:
-  - [Bug Fixes][inductor][AOTI] Fixes an edge case in remove_split_with_size_one to enhance stability (#135962).
-  
-  ## New_features:
-  - [New_features][inductor][AOTI] Introduces a new backend for faster computation in Triton kernels (#135530).
-  
-  ## Deprecations:
-  - [Deprecations][inductor][AOTI] Deprecates the old stride order configuration in favor of the new method (#136367).
-  
-  ## BC breaking:
-  - [BC breaking][inductor][AOTI] Changes the layout constraint which requires users to update their code as follows: ...
-  
-  ## Performance:
-  - [Performance][inductor][AOTI] Optimizes the kernel to reduce computation time by 20% (#135239).
-  
-  ## Documentation:
-  - [Documentation][inductor][AOTI] Updates the documentation to include new layout constraints (#135581).
-  
-  ## Developers:
-  - [Developers][inductor][AOTI] Refactors the cache management system to improve extensibility (#138239).
+### 2025-01-22 21:17:36
+<think>
+Okay, I need to categorize these Pull Requests (PRs) into the specified categories for PyTorch's release notes. Let me go through each PR one by one.
+
+First PR: "[Inductor] Disable TF32 in test_slice_scatter_reinplace (#135709)".
+- Inductor is related to AOT compilation, so this is a backend change. Disabling TF32 might be for better numerical stability or performance. This sounds like an improvement since it's adjusting settings for better outcomes.
+...
+
+And so on.
+</think>
+
+Here is the categorized list of PRs based on their impact and changes:
+
+## Improvements:
+- [inductor] Disables TF32 in test_slice_scatter_reinplace to enhance numerical stability (#135709).
+- [inductor] Removes batch fusion passes from default configuration for optimized performance (#135922).
+
+## New_features:
+- [AOTI][Tooling] Adds stats summary (mean/min/max, etc) for jit inductor tensor value printing (#135887).
+
+## Performance:
+- [inductor] Enables parallel compile by default in fbcode to improve build efficiency (#136246).
+
+## Developers:
+- Adds cache logs and performs minor caching cleanup to aid developers (#136456).
   ```
 
 ### Processing Summary
@@ -252,7 +253,7 @@ Unprocessed PRs have been written to 'unprocessed_prs.txt'
 
 - **GitHub API Rate Limits**:
 
-  If you encounter rate limit issues, the script will automatically pause and wait until the rate limit resets. Ensure your PAT has the necessary scopes and consider increasing the wait time if needed.
+  If you encounter rate limit issues, the script will automatically pause and wait until the rate limit resets. Ensure your PAT has the necessary scopes and consider increasing the wait time if needed. **Note**: GitHub's API rate limit is 5000 requests per hour, and it resets every hour. You can check your rate limit status by running `githubapi_limit.py`.
 
 - **Ollama Model Issues**:
 
